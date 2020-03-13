@@ -49,6 +49,40 @@ namespace Moq.Dapper
             return setupMock.Object;
         }
 
+        internal static ISetup<TDbConnection, Task<TResult>> SetupCommandAsync<TResult, TDbConnection, TMockResult>(
+            Mock<TDbConnection> mock, Action<Mock<DbCommand>, Func<TMockResult>> mockResult)
+             where TDbConnection : class, IDbConnection
+        {
+            var setupMock = new Mock<ISetup<TDbConnection, Task<TResult>>>();
+
+            var result = default(TResult);
+
+            setupMock.Setup(setup => setup.Returns(It.IsAny<Func<Task<TResult>>>()))
+                     .Callback<Func<Task<TResult>>>(r => result = r().Result);
+
+            var commandMock = new Mock<DbCommand>();
+
+            commandMock.Protected()
+                       .SetupGet<DbParameterCollection>("DbParameterCollection")
+                       .Returns(new Mock<DbParameterCollection>().Object);
+
+            commandMock.Protected()
+                       .Setup<DbParameter>("CreateDbParameter")
+                       .Returns(new Mock<DbParameter>().Object);
+
+            mockResult(commandMock, () => (TMockResult)Convert.ChangeType(result, typeof(TMockResult)));
+
+            mock.As<IDbConnection>()
+                .Setup(m => m.CreateCommand())
+                .Returns(commandMock.Object);
+
+            mock.As<IDbConnection>()
+                .SetupGet(m => m.State)
+                .Returns(ConnectionState.Open);
+
+            return setupMock.Object;
+        }
+
         internal static ISetup<TDbConnection, TResult> SetupCommand<TResult, TDbConnection>(Mock<TDbConnection> mock, Action<Mock<IDbCommand>, Func<TResult>> mockResult)
             where TDbConnection : class, IDbConnection
         {
