@@ -44,7 +44,7 @@ namespace Moq.Dapper
         }
 
         static ISetup<TDbConnection, Task<TResult>> SetupQueryAsync<TResult, TDbConnection>(Mock<TDbConnection> mock) where TDbConnection : class, IDbConnection =>
-            SetupCommandAsync<TResult, TDbConnection>(mock, (commandMock, result) =>
+            SetupCommandAsync<TResult, TDbConnection, TResult>(mock, (commandMock, result) =>
             {
                 commandMock.Protected()
                            .Setup<Task<DbDataReader>>("ExecuteDbDataReaderAsync", ItExpr.IsAny<CommandBehavior>(), ItExpr.IsAny<CancellationToken>())
