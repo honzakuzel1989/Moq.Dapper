@@ -23,12 +23,26 @@ namespace Moq.Dapper
             {
                 case nameof(SqlMapper.QueryAsync):
                     return SetupQueryAsync<TResult>(mock);
-                case nameof(SqlMapper.ExecuteAsync) when typeof(TResult) == typeof(int):
-                    return (ISetup<DbConnection, Task<TResult>>)SetupExecuteAsync(mock);
                 case nameof(SqlMapper.ExecuteScalarAsync):
                     return SetupExecuteScalarAsync<TResult>(mock);
                 default:
                     throw new NotSupportedException();
+            }
+        }
+
+        public static ISetup<DbConnection, Task<int>> SetupDapperAsync(this Mock<DbConnection> mock, Expression<Func<DbConnection, Task<int>>> expression)
+        {
+            var call = expression.Body as MethodCallExpression;
+
+            if (call?.Method.DeclaringType != typeof(SqlMapper))
+                throw new ArgumentException("Not a Dapper method.");
+
+            switch (call.Method.Name)
+            {
+                case nameof(SqlMapper.ExecuteAsync):
+                    return SetupExecuteAsync(mock);
+                default:
+                    return SetupDapperAsync<int>(mock, expression);
             }
         }
 
