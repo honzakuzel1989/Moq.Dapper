@@ -30,25 +30,11 @@ namespace Moq.Dapper
                 case nameof(SqlMapper.QueryFirstOrDefault):
                     return SetupQuery<TResult, TDbConnection>(mock);
 
+                case nameof(SqlMapper.Execute):
+                    return SetupExecute<TResult, TDbConnection>(mock);
+
                 default:
                     throw new NotSupportedException();
-            }
-        }
-
-        public static ISetup<TDbConnection, int> SetupDapper<TDbConnection>(this Mock<TDbConnection> mock, Expression<Func<TDbConnection, int>> expression)
-            where TDbConnection : class, IDbConnection
-        {
-            var call = expression.Body as MethodCallExpression;
-
-            if (call?.Method.DeclaringType != typeof(SqlMapper))
-                throw new ArgumentException("Not a Dapper method.");
-
-            switch (call.Method.Name)
-            {
-                case nameof(SqlMapper.Execute):
-                    return SetupExecute(mock);
-                default:
-                    return SetupDapper<int, TDbConnection>(mock, expression);
             }
         }
 
@@ -103,8 +89,8 @@ namespace Moq.Dapper
         static ISetup<TDbConnection, TResult> SetupExecuteScalar<TResult, TDbConnection>(Mock<TDbConnection> mock) where TDbConnection : class, IDbConnection =>
             SetupCommand<TResult, TDbConnection>(mock, (commandMock, result) => commandMock.Setup(command => command.ExecuteScalar()).Returns(() => result()));
 
-        static ISetup<TDbConnection, int> SetupExecute<TDbConnection>(Mock<TDbConnection> mock) where TDbConnection : class, IDbConnection =>
-            SetupCommand<int, TDbConnection>(mock, (commandMock, result) => commandMock.Setup(command => command.ExecuteNonQuery()).Returns(result));
+        static ISetup<TDbConnection, TResult> SetupExecute<TResult, TDbConnection>(Mock<TDbConnection> mock) where TDbConnection : class, IDbConnection =>
+            SetupCommand<TResult, TDbConnection>(mock, (commandMock, result) => commandMock.Setup(command => command.ExecuteNonQuery()).Returns(result));
 
         static ISetup<TDbConnection, Task<TResult>> SetupExecuteCommandAsync<TResult, TDbConnection, TMockResult>(
             Mock<TDbConnection> mock, Action<Mock<DbCommand>, Func<TMockResult>> mockResult)
