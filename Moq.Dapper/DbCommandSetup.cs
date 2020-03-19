@@ -15,10 +15,10 @@ namespace Moq.Dapper
         {
             var setupMock = new Mock<ISetup<TDbConnection, Task<TResult>>>();
 
-            var result = default(TResult);
+            var result = default(TMockResult);
 
             setupMock.Setup(setup => setup.Returns(It.IsAny<Func<Task<TResult>>>()))
-                     .Callback<Func<Task<TResult>>>(r => result = r().Result);
+                     .Callback<Func<Task<TResult>>>(r => result = (TMockResult)(object)r().Result);
 
             var commandMock = new Mock<DbCommand>();
 
@@ -30,8 +30,7 @@ namespace Moq.Dapper
                        .Setup<DbParameter>("CreateDbParameter")
                        .Returns(new Mock<DbParameter>().Object);
 
-            mockResult(commandMock, () => typeof(TMockResult) == typeof(TResult) ?
-                (TMockResult)(object)result : (TMockResult)Convert.ChangeType(result, typeof(TMockResult)));
+            mockResult(commandMock, () => result);
 
             var connnMock = mock.As<IDbConnection>();
 
